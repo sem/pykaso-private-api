@@ -113,7 +113,6 @@ class Client:
             "extraLoraId": None
         }]
 
-        import json
         response = self.session.post(
             url,
             headers=headers,
