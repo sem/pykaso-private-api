@@ -1,4 +1,5 @@
 import requests
+import json
 
 class Client:
     def __init__(self, username: str, password: str):
@@ -128,18 +129,64 @@ class Client:
             "message": message
         }
     
+    def fetch_models_summary(self, page: int = 1, page_size: int = 50, max_pages: int = None) -> list:
+        url_base = "https://app.pykaso.ai/api/models"
+        headers = {
+            "accept": "*/*",
+            "accept-language": "en-US,en;q=0.9",
+            "priority": "u=1, i",
+            "referer": "https://app.pykaso.ai/ai-image-generator",
+            "sec-ch-ua": '"Google Chrome";v="135", "Not-A.Brand";v="8", "Chromium";v="135"',
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": '"macOS"',
+            "sec-fetch-dest": "empty",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-site": "same-origin",
+            "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36"
+        }
+
+        all_models = []
+
+        while True:
+            url = f"{url_base}?page={page}&page_size={page_size}"
+            response = self.session.get(url, headers=headers, cookies=self.cookies)
+
+            if response.status_code != 200:
+                raise Exception(f'Failed to fetch models: {response.status_code}, {response.text}')
+
+            data = response.json()
+
+            trainings = data.get('data', {}).get('trainings', [])
+
+            if not trainings:
+                break
+
+            for model in trainings:
+                all_models.append({
+                    'id': model.get('id'),
+                    'name': model.get('modelName'),
+                    'created_at': model.get('createdAt')
+                })
+
+            current_page = data.get('data', {}).get('pagination', {}).get('currentPage', page)
+            total_pages = data.get('data', {}).get('pagination', {}).get('totalPages', current_page)
+
+            if (max_pages and page >= max_pages) or (current_page >= total_pages):
+                break
+            page += 1
+
+        return all_models
+    
 if __name__ == "__main__":
-    client = Client('email@europe.com', '$Password')
+    client = Client('mail@europe.com', '$Password')
 
     print(client.cookies)
 
-    print(client.get_total_balance())
+    balance = client.get_total_balance()
+    print(f"Balance: {balance}")
 
-    result = client.generate_image(
-        prompt="a futuristic neon city with flying cars at night",
-        number_of_images=4
-    )
+    models = client.fetch_models_summary(page=1, page_size=50, max_pages=None)
 
-    print(result["response"])
-    if result["message"]:
-        print(result["message"])
+    print(f"Fetched {len(models)} models:")
+    for model in models:
+        print(f"- ID: {model['id']}, Name: {model['name']}, Created at: {model['created_at']}")
