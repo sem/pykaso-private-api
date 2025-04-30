@@ -23,22 +23,9 @@ A user-friendly and efficient Python wrapper designed to facilitate seamless int
 
 ---
 
-## 📥 Installation
-
-```python
-pip install requests
-```
-
-
-Clone or copy the `Client` class into your project.
-
----
-
 ## 🚀 Quick Start
 
 ```python
-from client import Client  # Make sure to save the code as client.py or similar
-
 client = Client('your-email@example.com', 'your-password')
 
 # Get your current credit balance
